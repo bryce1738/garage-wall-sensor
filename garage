@@ -1,0 +1,80 @@
+from machine import Pin, PWM
+import time
+import ultrasonic
+from motor import Motor
+print('Hello World')
+
+TRIG = 3                    # Instead of a pin number 2 or 3 we can now write "TRIG" or "ECHO"
+ECHO = 2
+pwm = PWM(Pin(15))
+pwm.freq(50)
+
+US = ultrasonic.sonic(TRIG, ECHO)
+
+
+def setServoAngle(angle):
+    position = int(8000*(angle/180) + 1000)
+    pwm.duty_u16(position)
+motor_left = Motor("left", 8, 9, 6)
+motor_right = Motor("right", 10, 11, 7)
+s_state = []
+r_state =[]
+l_state = []
+t = 0
+m = 0
+while True:
+    for pos in range(0, 180, 180):
+        setServoAngle(80)
+        time.sleep(0.5)
+        dist = US.distance_mm()
+        t += 1
+        if dist > 200:
+            s_state.append('clear')
+            print(s_state[m])
+        elif 200 >= dist > 100:
+            s_state.append('slow')
+            print(s_state[m])
+        else:
+            s_state.append('stop')
+            print(s_state[m])
+    for pos in range(0, 180, 180):
+        setServoAngle(0)
+        time.sleep(0.5)
+        dist = US.distance_mm()
+        if dist > 200:
+            r_state.append('clear right')
+            print(r_state[m])
+        elif 100 < dist <= 200:
+            r_state.append('slow right')
+            print(r_state[m])
+        else:
+            r_state.append('stop right')
+            print(r_state[m])
+    for pos in range(-180, 0, 180):
+        setServoAngle(180)
+        time.sleep(0.5)
+        dist = US.distance_mm()
+        if dist > 200:
+            l_state.append('clear left')
+            print(l_state[m])
+        elif 100 < dist <= 200:
+            l_state.append('slow left')
+            print(l_state[m])
+        else:
+            l_state.append('stop left')
+            print(l_state[m])
+    m += 1
+    for i in range(0, t):
+        if l_state[i] == "stop left" and r_state[i] == 'stop right' and s_state[i] == 'stop':
+            motor_left.control(1, 0)
+            motor_right.control(1,0)
+            print('stopped!')
+        else:
+            motor_left.control(1,50)
+            motor_right.control(1,50)
+
+
+
+
+
+
